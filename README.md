@@ -1,103 +1,167 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>75% Attendance Checker - GTU</title>
+  <title>GTU Attendance Checker</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #f9f9f9;
+      background: linear-gradient(135deg, #e0f7fa, #ffffff);
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
       margin: 0;
-      padding: 20px;
+      overflow: hidden;
     }
 
     .container {
       background: white;
       padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-      max-width: 400px;
-      width: 100%;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      max-width: 450px;
+      width: 90%;
       text-align: center;
+      transform: scale(0.8);
+      animation: zoomIn 0.6s ease-out forwards;
+    }
+
+    @keyframes zoomIn {
+      to {
+        transform: scale(1);
+      }
     }
 
     h1 {
+      color: #007acc;
       margin-bottom: 20px;
-      color: #222;
+      font-weight: 600;
     }
 
-    input {
+    select, input {
       width: 100%;
-      padding: 10px;
-      margin-bottom: 15px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
       font-size: 16px;
+      transition: border-color 0.3s;
+    }
+
+    select:focus, input:focus {
+      border-color: #007acc;
+      outline: none;
     }
 
     button {
-      padding: 10px 20px;
+      padding: 12px 20px;
       font-size: 16px;
-      background: #007BFF;
+      background: #007acc;
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
-      transition: 0.3s;
+      transition: background 0.3s, transform 0.2s;
     }
 
     button:hover {
-      background: #0056b3;
+      background: #005fa3;
+      transform: scale(1.03);
     }
 
     .result {
       margin-top: 20px;
       font-size: 18px;
-      color: #333;
+      color: #222;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeIn 0.8s ease-out forwards;
+      animation-delay: 0.3s;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .note {
+      font-size: 14px;
+      color: #666;
+      margin-top: 12px;
     }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <h1>📚 GTU 75% Attendance</h1>
-    
-    <input type="number" id="total" placeholder="Total classes held">
-    <input type="number" id="attended" placeholder="Classes attended">
-    <button onclick="calculate()">Check</button>
+    <h1>GTU Attendance Checker</h1>
+
+    <select id="semester">
+      <option value="1">Semester 1</option>
+      <option value="2" selected>Semester 2</option>
+      <option value="3">Semester 3</option>
+      <option value="4">Semester 4</option>
+      <option value="5">Semester 5</option>
+      <option value="6">Semester 6</option>
+      <option value="7">Semester 7</option>
+      <option value="8">Semester 8</option>
+    </select>
+
+    <input type="number" id="attended" placeholder="Enter number of classes attended">
+    <button onclick="calculate()">🔍 Analyze Attendance</button>
 
     <div class="result" id="result"></div>
   </div>
 
   <script>
     function calculate() {
-      const total = parseInt(document.getElementById("total").value);
       const attended = parseInt(document.getElementById("attended").value);
+      const today = new Date("2025-04-20");
+      const semesterStart = new Date("2025-01-21");
+      const semesterEnd = new Date("2025-05-10");
       const result = document.getElementById("result");
 
-      if (isNaN(total) || isNaN(attended) || total <= 0 || attended < 0 || attended > total) {
-        result.innerHTML = "⚠️ Please enter valid numbers.";
+      if (isNaN(attended) || attended < 0) {
+        result.innerHTML = "⚠️ Please enter a valid number of attended classes.";
         return;
       }
 
-      const percent = (attended / total) * 100;
-      result.innerHTML = `🎯 Current attendance: ${percent.toFixed(2)}%`;
+      const msInDay = 1000 * 60 * 60 * 24;
+      const daysPassed = Math.floor((today - semesterStart) / msInDay);
+      const totalDays = Math.floor((semesterEnd - semesterStart) / msInDay);
+      const weeksPassed = Math.floor(daysPassed / 7);
+      const totalWeeks = Math.floor(totalDays / 7);
+      const totalClasses = totalWeeks * 2;
+      const classesShouldHave = weeksPassed * 2;
+      const weeksLeft = totalWeeks - weeksPassed;
+      const daysLeft = totalDays - daysPassed;
+      const percent = (attended / totalClasses) * 100;
+
+      let output = `<div style='animation:fadeIn 1s ease-out forwards'>`;
+      output += `🧮 <strong>Attendance:</strong> ${percent.toFixed(2)}%<br>`;
 
       if (percent >= 75) {
-        result.innerHTML += "<br>✅ You're safe! You meet the 75% requirement.";
+        output += `✅ You're maintaining GTU standards. Excellent work!`;
       } else {
-        let x = 0;
-        while (((attended + x) / (total + x)) * 100 < 75) {
-          x++;
-        }
-        result.innerHTML += `<br>⚠️ Attend next <strong>${x}</strong> classes without missing to reach 75%.`;
+        const ideal = Math.ceil((0.75 * totalClasses));
+        const moreNeeded = ideal - attended;
+        output += `⚠️ Below required level. You need approx <strong>${moreNeeded}</strong> more classes to reach 75%.`;
       }
+
+      output += `<br><br>📅 <strong>${weeksLeft}</strong> weeks (${daysLeft} days) remaining.`;
+      output += `<br>📖 By now, ideal attendance: <strong>${classesShouldHave}</strong> classes.`;
+      output += `<br>📊 Projected total semester classes: <strong>${totalClasses}</strong>`;
+      output += `</div>`;
+
+      result.innerHTML = output;
+      result.style.animation = "none";
+      result.offsetHeight;
+      result.style.animation = "fadeIn 1s ease-out forwards";
     }
   </script>
 
